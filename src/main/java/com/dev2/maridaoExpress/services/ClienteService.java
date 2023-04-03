@@ -1,67 +1,79 @@
 package com.dev2.maridaoExpress.services;
 
-import com.dev2.maridaoExpress.domain.Usuario;
 import com.dev2.maridaoExpress.domain.Cliente;
+import com.dev2.maridaoExpress.domain.Pessoa;
 import com.dev2.maridaoExpress.domain.dtos.ClienteDTO;
-import com.dev2.maridaoExpress.repositories.UsuarioRepository;
 import com.dev2.maridaoExpress.repositories.ClienteRepository;
-import com.dev2.maridaoExpress.handlers.exceptions.DataIntegrityViolationException;
-import com.dev2.maridaoExpress.handlers.exceptions.ObjectNotFoundException;
+import com.dev2.maridaoExpress.repositories.PessoaRepository;
+import com.dev2.maridaoExpress.services.exceptions.DataIntegrityViolationException;
+import com.dev2.maridaoExpress.services.exceptions.ObjectnotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ClienteService {
 
-    @Autowired
-    private ClienteRepository tecnicoRepository;
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+	@Autowired
+	private ClienteRepository repository;
+	@Autowired
+	private PessoaRepository pessoaRepository;
+	@Autowired
+	private BCryptPasswordEncoder encoder;
 
-    public Cliente findById(Integer id) {
-        Optional<Cliente> obj = tecnicoRepository.findById(id);
-        return obj.orElseThrow(() -> new ObjectNotFoundException("Objeto nao encontrado! ID ----> " + id));
-    }
+	public Cliente findById(Integer id) {
+		Optional<Cliente> obj = repository.findById(id);
+		return obj.orElseThrow(() -> new ObjectnotFoundException("Objeto não encontrado! Id: " + id));
+	}
 
-    public List<Cliente> findAll() {
-        return tecnicoRepository.findAll();
-    }
+	public List<Cliente> findAll() {
+		return repository.findAll();
+	}
 
-    public Cliente create(ClienteDTO objDTO) {
-        objDTO.setId(null);
-        validaPorCpfEEmail(objDTO);
-        Cliente newObj = new Cliente(objDTO);
-        return tecnicoRepository.save(newObj);
-    }
+	public Cliente create(ClienteDTO objDTO) {
+		objDTO.setId(null);
+		objDTO.setSenha(encoder.encode(objDTO.getSenha()));
+		validaPorCpfEEmail(objDTO);
+		Cliente newObj = new Cliente(objDTO);
+		return repository.save(newObj);
+	}
 
-    public Cliente update(Integer id, ClienteDTO objDTO) {
-        objDTO.setId(id);
-        Cliente oldObj = findById(id);
-        validaPorCpfEEmail(objDTO);
-        oldObj = new Cliente(objDTO);
-        return tecnicoRepository.save(oldObj);
-    }
+	public Cliente update(Integer id, @Valid ClienteDTO objDTO) {
+		objDTO.setId(id);
+		Cliente oldObj = findById(id);
+		
+		if(!objDTO.getSenha().equals(oldObj.getSenha())) 
+			objDTO.setSenha(encoder.encode(objDTO.getSenha()));
+		
+		validaPorCpfEEmail(objDTO);
+		oldObj = new Cliente(objDTO);
+		return repository.save(oldObj);
+	}
 
-    public void delete(Integer id) {
-        Cliente obj = findById(id);
-        if(obj.getChamados().size() > 0) {
-            throw new DataIntegrityViolationException("Cliente possui ordens de servico e nao pode ser excluido!");
-        }
-        tecnicoRepository.deleteById(id);
-    }
+	public void delete(Integer id) {
+		Cliente obj = findById(id);
 
-    private void validaPorCpfEEmail(ClienteDTO objDTO) {
-        Optional<Usuario> obj = usuarioRepository.findByCpf(objDTO.getCpf());
-        if(obj.isPresent() && obj.get().getId() != objDTO.getId()) {
-            throw new DataIntegrityViolationException("CPF já cadastrado no sistema!"); //Objects
-        }
-        obj = usuarioRepository.findByEmail(objDTO.getEmail());
-        if(obj.isPresent() && obj.get().getId() != objDTO.getId()) {
-            throw new DataIntegrityViolationException("E-mail já cadastrado no sistema!");
-        }
-    }
+		if (obj.getChamados().size() > 0) {
+			throw new DataIntegrityViolationException("Cliente possui ordens de serviço e não pode ser deletado!");
+		}
+
+		repository.deleteById(id);
+	}
+
+	private void validaPorCpfEEmail(ClienteDTO objDTO) {
+		Optional<Pessoa> obj = pessoaRepository.findByCpf(objDTO.getCpf());
+		if (obj.isPresent() && obj.get().getId() != objDTO.getId()) {
+			throw new DataIntegrityViolationException("CPF já cadastrado no sistema!");
+		}
+
+		obj = pessoaRepository.findByEmail(objDTO.getEmail());
+		if (obj.isPresent() && obj.get().getId() != objDTO.getId()) {
+			throw new DataIntegrityViolationException("E-mail já cadastrado no sistema!");
+		}
+	}
 
 }

@@ -10,12 +10,11 @@ import org.springframework.context.annotation.Profile;
 @Profile("test")
 public class TestConfig {
 
-    @Autowired
-    private DBService dbService;
-
-    @Bean
-    public void instanciaDB() {
-        this.dbService.instanciaDB();
-    }
-
+	@Autowired
+	private DBService dbService;
+	
+	@Bean
+	public void instanciaDB() {
+		this.dbService.instanciaDB();
+	}
 }

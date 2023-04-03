@@ -3,62 +3,104 @@ package com.dev2.maridaoExpress.domain.dtos;
 import com.dev2.maridaoExpress.domain.Cliente;
 import com.dev2.maridaoExpress.domain.enums.Perfil;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.hibernate.validator.constraints.br.CPF;
 
-import java.io.Serial;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Getter
-@Setter
-@NoArgsConstructor
 public class ClienteDTO implements Serializable {
+	private static final long serialVersionUID = 1L;
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+	protected Integer id;
+	@NotNull(message = "O campo NOME é requerido")
+	protected String nome;
+	@NotNull(message = "O campo CPF é requerido")
+	@CPF
+	protected String cpf;
+	@NotNull(message = "O campo EMAIL é requerido")
+	protected String email;
+	@NotNull(message = "O campo SENHA é requerido")
+	protected String senha;
+	protected Set<Integer> perfis = new HashSet<>();
 
-    protected Integer id;
-    @NotBlank
-    @NotNull(message = "O campo 'NOME' e obrigatorio")
-    protected String nome;
-    @NotBlank
-    @NotNull(message = "O campo 'CPF' e obrigatorio")
-    protected String cpf;
-    @NotBlank
-    @NotNull(message = "O campo 'EMAIL' e obrigatorio")
-    protected String email;
-    @NotBlank
-    @NotNull(message = "O campo 'SENHA' e obrigatorio")
-    protected String senha;
-    protected Set<Integer> perfis = new HashSet<>();
+	@JsonFormat(pattern = "dd/MM/yyyy")
+	protected LocalDate dataCriacao = LocalDate.now();
 
-    @JsonFormat(pattern = "dd/MM/yyy")
-    protected LocalDate dataCriacao = LocalDate.now();
+	public ClienteDTO() {
+		super();
+		addPerfil(Perfil.CLIENTE);
+	}
 
-    public ClienteDTO(Cliente obj) {
-        super();
-        this.id = obj.getId();
-        this.nome = obj.getNome();
-        this.cpf = obj.getCpf();
-        this.email = obj.getEmail();
-        this.senha = obj.getSenha();
-        this.perfis = obj.getPerfis().stream().map(Perfil::getCodigo).collect(Collectors.toSet());
-        this.dataCriacao = obj.getDataCriacao();
-    }
+	public ClienteDTO(Cliente obj) {
+		super();
+		this.id = obj.getId();
+		this.nome = obj.getNome();
+		this.cpf = obj.getCpf();
+		this.email = obj.getEmail();
+		this.senha = obj.getSenha();
+		this.perfis = obj.getPerfis().stream().map(x -> x.getCodigo()).collect(Collectors.toSet());
+		this.dataCriacao = obj.getDataCriacao();
+		addPerfil(Perfil.CLIENTE);
+	}
 
-    public Set<Perfil> getPerfis() {
-        return perfis.stream().map(Perfil::toEnum).collect(Collectors.toSet());
-    }
+	public Integer getId() {
+		return id;
+	}
 
-    public void addPerfis(Perfil perfil) {
-        this.perfis.add(perfil.getCodigo());
-    }
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getNome() {
+		return nome;
+	}
+
+	public void setNome(String nome) {
+		this.nome = nome;
+	}
+
+	public String getCpf() {
+		return cpf;
+	}
+
+	public void setCpf(String cpf) {
+		this.cpf = cpf;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getSenha() {
+		return senha;
+	}
+
+	public void setSenha(String senha) {
+		this.senha = senha;
+	}
+
+	public Set<Perfil> getPerfis() {
+		return perfis.stream().map(x -> Perfil.toEnum(x)).collect(Collectors.toSet());
+	}
+
+	public void addPerfil(Perfil perfil) {
+		this.perfis.add(perfil.getCodigo());
+	}
+
+	public LocalDate getDataCriacao() {
+		return dataCriacao;
+	}
+
+	public void setDataCriacao(LocalDate dataCriacao) {
+		this.dataCriacao = dataCriacao;
+	}
 
 }
